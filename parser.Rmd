@@ -1,0 +1,56 @@
+---
+author: "Fabio Votta"
+output: html_document
+---
+
+
+
+
+## Packages and Folders
+
+```{r}
+# Install these packages if you don't have them yet
+# if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(tidyverse)
+
+```
+
+
+## Load Data
+
+```{r, data}
+
+source("parse.R")
+
+tiktok_dat <- dir("20200527_00_49_58/", full.names = T) %>% 
+  map(~jsonlite::fromJSON(.x) %>% as_tibble) %>% 
+  map(~split(.x, 1:nrow(.))) %>% 
+  purrr::flatten() %>% 
+  map_dfr(parse_tiktok)
+
+```
+
+
+## Analysis / Dataviz
+
+```{r, analysis}
+
+tiktok_dat %>% 
+  mutate(date = from_unix(createTime)) %>%
+  mutate(date = lubridate::floor_date(date, "day")) %>% 
+  count(date, sort = T) %>% 
+  filter(date >= as.Date("2020-01-01")) %>% 
+  filter(date < as.Date("2020-05-25")) %>% 
+  ggplot(aes(date, n)) +
+  geom_line() +
+  theme_minimal() +
+  ggtitle("Daily TikTok Posts with COVID-19 Conspiracies related Hashtags") +
+  ylab("Daily TikTok Posts") +
+  xlab("Day TikTok was posted")
+
+```
+
+
+
+## Conclusion
